@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>You're Invited! - 21st Birthday Celebration</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Dancing+Script:wght@400;700&family=Quicksand:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            script: ['"Dancing Script"', 'cursive'],
+            body: ['"Quicksand"', 'sans-serif'],
+            serif: ['"Cormorant Garamond"', 'serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      overflow: hidden;
+      font-family: 'Quicksand', sans-serif;
+      background: #2a3a28;
+      height: 100vh; height: 100dvh;
+      width: 100vw;
+      touch-action: none;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: none;
+    }
+
+    /* ====== PHOTO BACKGROUND ====== */
+    .bg-photo {
+      position: fixed; inset: 0; z-index: 0;
+      background: url('assets/bg/garden-bg.jpg') center center / cover no-repeat;
+    }
+
+    /* Soft dreamy overlay — slight blur + warm tint so envelope pops */
+    .bg-overlay {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse at center, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.15) 100%),
+        linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,252,240,0.08) 50%, rgba(0,0,0,0.1) 100%);
+    }
+
+    /* Soft light bokeh spots */
+    .bokeh-layer {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+    }
+    .bokeh {
+      position: absolute; border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.04) 50%, transparent 70%);
+      animation: bokeh-drift 18s ease-in-out infinite;
+    }
+    @keyframes bokeh-drift {
+      0%, 100% { transform: translateY(0) scale(1); opacity: 0.5; }
+      33% { transform: translateY(-10px) scale(1.04); opacity: 0.7; }
+      66% { transform: translateY(8px) scale(0.96); opacity: 0.4; }
+    }
+
+    /* ====== THREE.JS CANVAS ====== */
+    #canvas-container { position: fixed; inset: 0; z-index: 5; touch-action: none; }
+
+    /* ====== FIREFLY CANVAS ====== */
+    #firefly-canvas { position: fixed; inset: 0; z-index: 6; pointer-events: none; }
+
+    /* ====== VIGNETTE ====== */
+    .vignette {
+      position: fixed; inset: 0;
+      background: radial-gradient(ellipse at center, transparent 45%, rgba(20,40,20,0.25) 100%);
+      z-index: 7; pointer-events: none;
+    }
+
+    /* ====== GOLDEN BLOOM ====== */
+    #golden-bloom {
+      position: fixed; inset: 0; z-index: 8; pointer-events: none; opacity: 0;
+      background: radial-gradient(ellipse at center, rgba(255,245,180,0.5) 0%, rgba(255,240,150,0.15) 40%, transparent 70%);
+    }
+
+    /* ====== FLOATING ====== */
+    .dandelion-seed { position: fixed; z-index: 7; pointer-events: none; opacity: 0;
+      width: 3px; height: 3px; background: rgba(255,255,255,0.6); border-radius: 50%; box-shadow: 0 0 6px rgba(255,255,255,0.3); }
+
+    /* ====== PROMPTS ====== */
+    .click-prompt {
+      position: fixed; bottom: max(12%, calc(env(safe-area-inset-bottom) + 60px));
+      left: 50%; transform: translateX(-50%); z-index: 10;
+      animation: floatText 3s ease-in-out infinite; pointer-events: none;
+    }
+    @keyframes floatText { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-8px); } }
+    .drag-hint {
+      position: fixed; bottom: max(6%, calc(env(safe-area-inset-bottom) + 30px));
+      left: 50%; transform: translateX(-50%); z-index: 10; pointer-events: none; opacity: 0;
+    }
+    @media (hover: none) { .click-text-click { display: none; } .click-text-tap { display: inline; } }
+    @media (hover: hover) { .click-text-click { display: inline; } .click-text-tap { display: none; } }
+
+    /* ====== LETTER OVERLAY ====== */
+    #letter-overlay {
+      position: fixed; inset: 0; z-index: 20;
+      display: flex; align-items: center; justify-content: center;
+      pointer-events: none; opacity: 0;
+      background: rgba(0,0,0,0);
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+    #letter-overlay.active { pointer-events: all; }
+
+    .letter-content {
+      width: min(92vw, 560px);
+      max-height: 85vh; max-height: 85dvh;
+      overflow-y: auto; transform: translateY(100vh);
+      position: relative; z-index: 1;
+    }
+    .letter-card {
+      position: relative; border-radius: 12px; overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2), 0 15px 50px rgba(0,0,0,0.15);
+    }
+    .letter-card img { display: block; width: 100%; height: auto; }
+
+    .letter-content::-webkit-scrollbar { width: 4px; }
+    .letter-content::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 3px; }
+    .letter-content::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 3px; }
+
+    /* ====== RSVP ====== */
+    .rsvp-section {
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 0 0 12px 12px;
+      padding: 1.5rem 1.25rem;
+      text-align: center;
+      margin-top: -4px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    .rsvp-section h3 {
+      font-family: 'Dancing Script', cursive;
+      color: #4a6848;
+      font-size: 1.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .rsvp-input {
+      width: 100%;
+      max-width: 320px;
+      padding: 0.65rem 1rem;
+      border: 1.5px solid #d1d5db;
+      border-radius: 8px;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 0.95rem;
+      color: #374151;
+      background: #fff;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .rsvp-input:focus { border-color: #6b8f6b; }
+    .rsvp-input::placeholder { color: #9ca3af; }
+    .rsvp-btn {
+      display: inline-block;
+      margin-top: 0.75rem;
+      padding: 0.65rem 2.5rem;
+      background: linear-gradient(135deg, #5a8050, #6b9f5b);
+      color: #fff;
+      font-family: 'Quicksand', sans-serif;
+      font-weight: 600;
+      font-size: 1rem;
+      letter-spacing: 0.08em;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 2px 8px rgba(90,128,80,0.3);
+    }
+    .rsvp-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(90,128,80,0.4); }
+    .rsvp-btn:active { transform: translateY(0); }
+    .rsvp-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .rsvp-status {
+      margin-top: 0.6rem;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 0.85rem;
+      min-height: 1.2em;
+    }
+    .rsvp-status.success { color: #4a6848; }
+    .rsvp-status.error { color: #dc2626; }
+
+    /* ====== CLOSE ====== */
+    .close-letter-btn {
+      position: fixed; top: max(20px, env(safe-area-inset-top, 20px));
+      right: max(20px, env(safe-area-inset-right, 20px));
+      z-index: 30; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    .close-letter-btn.active { opacity: 1; pointer-events: all; }
+
+    /* ====== LOADING ====== */
+    #loading-screen {
+      position: fixed; inset: 0; z-index: 100;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: linear-gradient(170deg, #4a6848 0%, #5a8050 50%, #3a5838 100%);
+      transition: opacity 1s ease;
+    }
+    #loading-screen.fade-out { opacity: 0; pointer-events: none; }
+    .loader-dots { display: flex; gap: 8px; margin-bottom: 1.5rem; }
+    .loader-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      animation: dotPulse 1.4s ease-in-out infinite;
+    }
+    .loader-dot:nth-child(1) { background: rgba(255,255,255,0.6); animation-delay: 0s; }
+    .loader-dot:nth-child(2) { background: rgba(255,240,200,0.6); animation-delay: 0.2s; }
+    .loader-dot:nth-child(3) { background: rgba(200,220,255,0.6); animation-delay: 0.4s; }
+    .loader-dot:nth-child(4) { background: rgba(255,210,230,0.6); animation-delay: 0.6s; }
+    @keyframes dotPulse {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+      40% { transform: scale(1.2); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Loading -->
+  <div id="loading-screen">
+    <div class="loader-dots">
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+    </div>
+    <p class="font-serif text-white/50 text-lg tracking-widest uppercase" style="letter-spacing:0.2em;">Preparing your invitation</p>
+  </div>
+
+  <!-- Photo background -->
+  <div class="bg-photo"></div>
+  <div class="bg-overlay"></div>
+
+  <!-- Bokeh light spots -->
+  <div class="bokeh-layer">
+    <div class="bokeh" style="width:100px;height:100px;top:10%;left:8%;animation-delay:-2s;"></div>
+    <div class="bokeh" style="width:70px;height:70px;top:18%;right:12%;animation-delay:-6s;opacity:0.3;"></div>
+    <div class="bokeh" style="width:130px;height:130px;top:5%;left:55%;animation-delay:-10s;opacity:0.25;"></div>
+    <div class="bokeh" style="width:50px;height:50px;top:30%;left:20%;animation-delay:-4s;opacity:0.35;"></div>
+    <div class="bokeh" style="width:80px;height:80px;top:25%;right:25%;animation-delay:-14s;opacity:0.2;"></div>
+    <div class="bokeh" style="width:60px;height:60px;top:8%;left:35%;animation-delay:-8s;opacity:0.3;"></div>
+  </div>
+
+  <!-- Three.js -->
+  <div id="canvas-container"></div>
+
+  <!-- Fireflies -->
+  <canvas id="firefly-canvas"></canvas>
+
+  <!-- Vignette -->
+  <div class="vignette"></div>
+  <div id="golden-bloom"></div>
+
+  <!-- Prompts -->
+  <div class="click-prompt" id="click-prompt">
+    <p class="font-serif text-white/80 text-lg sm:text-xl md:text-2xl tracking-widest" style="text-shadow: 0 1px 8px rgba(0,0,0,0.4), 0 0 20px rgba(0,0,0,0.2);">
+      <span class="click-text-tap">Tap the envelope</span>
+      <span class="click-text-click">Click the envelope</span>
+    </p>
+  </div>
+  <div class="drag-hint" id="drag-hint">
+    <p class="font-body text-white/30 text-xs sm:text-sm tracking-wider" style="text-shadow: 0 1px 4px rgba(0,0,0,0.3);">drag to rotate</p>
+  </div>
+
+  <!-- Letter overlay -->
+  <div id="letter-overlay">
+    <div class="letter-content">
+      <div class="letter-card letter-stagger">
+        <img src="assets/letter/Dreamy Floral Garden Wedding Invitation Card.png" alt="Birthday Invitation" />
+      </div>
+      <div class="rsvp-section letter-stagger">
+        <h3>Will you be there?</h3>
+        <input type="text" class="rsvp-input" id="rsvp-name" placeholder="Enter your name" autocomplete="name" />
+        <br />
+        <button class="rsvp-btn" id="rsvp-btn">RSVP</button>
+        <p class="rsvp-status" id="rsvp-status"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Close button -->
+  <button class="close-letter-btn" id="close-letter-btn">
+    <div class="bg-white/80 hover:bg-white text-gray-700 rounded-full w-10 h-10 flex items-center justify-center backdrop-blur-sm transition-colors shadow-lg border border-gray-200/50">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </div>
+  </button>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
