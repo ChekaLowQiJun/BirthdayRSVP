@@ -891,14 +891,19 @@
 
     btn.disabled = true;
     btn.textContent = 'Added!';
-    status.textContent = 'Thank you, ' + name + '!';
-    status.className = 'rsvp-status success';
-
-    // Open calendar immediately (must be synchronous from user gesture for mobile)
-    openGoogleCalendar(name);
 
     // Log RSVP to Google Sheets in background
     logRSVP(name);
+
+    // Show tappable calendar link (works in Telegram/in-app browsers)
+    const calURL = buildCalendarURL(name);
+    status.innerHTML = 'Thank you, ' + name + '!<br>' +
+      '<a href="' + calURL + '" target="_blank" rel="noopener" ' +
+      'style="display:inline-block;margin-top:0.5rem;padding:0.5rem 1.5rem;' +
+      'background:linear-gradient(135deg,#4285f4,#357ae8);color:#fff;' +
+      'border-radius:6px;text-decoration:none;font-weight:600;font-size:0.9rem;">' +
+      'Add to Google Calendar</a>';
+    status.className = 'rsvp-status success';
   }
 
   function logRSVP(name) {
@@ -919,15 +924,15 @@
     });
   }
 
-  function openGoogleCalendar(name) {
+  function buildCalendarURL(name) {
     const params = new URLSearchParams({
       action: 'TEMPLATE',
       text: EVENT_CONFIG.title,
       dates: EVENT_CONFIG.startDate + '/' + EVENT_CONFIG.endDate,
-      details: 'RSVP by: ' + name + '\\n\\n' + EVENT_CONFIG.description,
+      details: 'RSVP by: ' + name + '\n\n' + EVENT_CONFIG.description,
       location: EVENT_CONFIG.location,
     });
-    window.open('https://calendar.google.com/calendar/render?' + params.toString(), '_blank');
+    return 'https://calendar.google.com/calendar/render?' + params.toString();
   }
 
   // =============================================
