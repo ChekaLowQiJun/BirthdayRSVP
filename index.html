@@ -114,11 +114,18 @@
     }
     #letter-overlay.active { pointer-events: all; }
 
-    .letter-content {
+    .letter-wrapper {
+      position: relative;
       width: min(92vw, 560px);
       max-height: 85vh; max-height: 85dvh;
+      display: flex;
+      flex-direction: column;
+    }
+    .letter-content {
+      width: 100%;
       overflow-y: auto; transform: translateY(100vh);
       position: relative; z-index: 1;
+      flex: 1; min-height: 0;
     }
     .letter-card {
       position: relative; border-radius: 12px; overflow: hidden;
@@ -191,11 +198,11 @@
 
     /* ====== SCROLL ARROW ====== */
     .scroll-arrow {
-      position: fixed;
-      bottom: 20px;
+      position: absolute;
+      bottom: 10px;
       left: 50%;
       transform: translateX(-50%);
-      z-index: 25;
+      z-index: 2;
       pointer-events: none;
       opacity: 0;
       animation: bounceArrow 1.8s ease-in-out infinite;
@@ -290,10 +297,8 @@
 
   <!-- Letter overlay -->
   <div id="letter-overlay">
+    <div class="letter-wrapper">
     <div class="letter-content" id="letter-content">
-      <div class="scroll-arrow" id="scroll-arrow">
-        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e8839b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-      </div>
       <div class="letter-card letter-stagger">
         <img src="assets/letter/Dreamy Floral Garden Wedding Invitation Card.png" alt="Birthday Invitation" />
       </div>
@@ -304,6 +309,10 @@
         <button class="rsvp-btn" id="rsvp-btn">RSVP</button>
         <p class="rsvp-status" id="rsvp-status"></p>
       </div>
+    </div>
+    <div class="scroll-arrow" id="scroll-arrow">
+      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e8839b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+    </div>
     </div>
   </div>
 
